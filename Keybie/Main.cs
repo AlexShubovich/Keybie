@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Keybie
@@ -21,24 +22,34 @@ namespace Keybie
         {
             Inputs = new ObservableCollection<Input>();
             InputEvent.ObserveOnDispatcher().Subscribe(OnInputEvent);
-            Task.Factory.StartNew(() => {
-            _serial.Open();
-            while (_serial.IsOpen)
+            Task.Factory.StartNew(() =>
             {
-                if(_serial.BytesToRead > 0)
+                _serial.BaudRate = 115200;
+                _serial.Open();
+                _serial.DataReceived += _serial_DataReceived;
+            });
+        }
+
+        private void _serial_DataReceived(object sender, SerialDataReceivedEventArgs e)
+        {
+            string input = string.Empty;
+            DateTime dateTime = DateTime.Now;
+            while (DateTime.Now - dateTime < TimeSpan.FromMilliseconds(500))
+            {
+                if (_serial.BytesToRead > 0)
                 {
-                    InputEvent.OnNext(_serial.ReadExisting());
+                    int read = _serial.ReadChar();
+                    input += read.ToString("X2");
                 }
             }
-            });
+            Console.WriteLine(input);
         }
 
         private void OnInputEvent(string obj)
         {
-            if (!Inputs.Any(x=>x.Raw == obj))
-            {
-                Inputs.Add(new Input(obj));
-            }
+
+
+
         }
 
 
