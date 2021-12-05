@@ -31,6 +31,7 @@ namespace Keybie
     {
         public string Path { get; set; }
         public string Arguments { get; set; }
+        public bool IsRunAsAdministartor { get; internal set; }
 
         public override void Execute()
         {
