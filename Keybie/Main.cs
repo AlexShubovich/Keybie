@@ -40,6 +40,10 @@ namespace Keybie
         public string LastInput { get { return _LastInput; } set { SetProperty(ref _LastInput, value); } }
 
 
+        private bool _AutoConnect;
+        public bool AutoConnect { get { return _AutoConnect; } set { SetProperty(ref _AutoConnect, value); } }
+
+
         private DelegateCommand _StartCommand;
         public DelegateCommand StartCommand
         {
@@ -142,8 +146,15 @@ namespace Keybie
         {
             try
             {
-                var config = JsonConvert.SerializeObject(Actions);
-                File.WriteAllText(_configFile, config);
+                Config config = new Config()
+                {
+                    Action = Actions.ToList(),
+                    AutoConnect = AutoConnect,
+                    ComPort = SelectedPort,
+                    BaudRate = SelectedBaudRate
+                };
+                var configStr = JsonConvert.SerializeObject(config);
+                File.WriteAllText(_configFile, configStr);
             }
             catch { }
         }
@@ -156,16 +167,33 @@ namespace Keybie
             SelectedBaudRate = 115200;
             Ports = new ObservableCollection<string>();
             Inputs = new ObservableCollection<Input>();
-
-            try
-            {
-                var config = File.ReadAllText(_configFile);
-                Actions.AddRange(JsonConvert.DeserializeObject<List<RunProcessAction>>(config));
-            }
-            catch { }
+            GetPorts();
+            LoadConfig();
+            if (AutoConnect)
+                OnStartCommand();
 
             InputEvent.ObserveOnDispatcher().Subscribe(OnInputEvent);
-            GetPorts();
+
+        }
+
+        private void LoadConfig()
+        {
+            try
+            {
+                var config = JsonConvert.DeserializeObject<Config>(File.ReadAllText(_configFile));
+                Actions.AddRange(config.Action);
+                AutoConnect = config.AutoConnect;
+                SelectedBaudRate = config.BaudRate;
+                if (Ports.Contains(config.ComPort))
+                {
+                    SelectedPort = config.ComPort;
+                }
+                else
+                {
+                    SelectedPort = Ports.FirstOrDefault();
+                }
+            }
+            catch { }
         }
 
         private void _serial_DataReceived(object sender, SerialDataReceivedEventArgs e)

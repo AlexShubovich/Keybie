@@ -35,6 +35,7 @@
 
             <Button Content="Start" Command="{Binding StartCommand}"/>
             <Button Content="Stop" Command="{Binding StopCommand}" Margin="10 0"/>
+            <CheckBox Content="Auto Connect" IsChecked="{Binding AutoConnect}" VerticalAlignment="Center"/>
         </StackPanel>
 
         <StackPanel Orientation="Horizontal" Grid.Row="1">
